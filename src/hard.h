@@ -99,7 +99,8 @@ enum {
 	WAIT_CURRENT_ZERO,
 	START_MEAS,
 	SHOW_V,
-	SHOW_I
+	SHOW_I,
+	SHOW_R
 
 } typedef MainStates;
 

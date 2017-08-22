@@ -20,13 +20,14 @@
 #include "tim.h"
 #include "stm32f0xx_it.h"
 #include "dsp.h"
+#include "adc.h"
 
 #include "lcd.h"
 #include "lcd_utils.h"
 
 #include "flash_program.h"
 
-//#include <stdio.h>
+#include <stdio.h>
 //#include <string.h>
 
 
@@ -50,7 +51,9 @@ volatile unsigned short lcd_backlight_timer;
 const char s_blank_line [] = {"                "};
 
 
-
+// ------- Externals del ADC ------------
+unsigned short voltage_samples [SIZEOF_VOLTAGE_VECT];
+unsigned short current_samples [SIZEOF_CURRENT_VECT];
 
 
 
@@ -58,6 +61,8 @@ const char s_blank_line [] = {"                "};
 
 // ------- de los timers -------
 volatile unsigned short timer_standby;
+volatile unsigned short tt_current;
+
 
 // ------- de los switches -------
 
@@ -71,7 +76,9 @@ volatile unsigned short timer_standby;
 #define SAVE_S2		2
 
 
-
+//Para las mediciones
+#define KV	0.0107
+#define KI	0.00473
 
 
 
@@ -90,6 +97,14 @@ int main(void)
 	unsigned char i;
 	RspMessages resp = RESP_CONTINUE;
 	MainStates main_state = SET_CURRENT_ZERO;
+	char str [32];
+	unsigned short current = 0;
+	unsigned short voltage = 0;
+	unsigned short current_zero = 0;
+	float fcalc;
+	short volt_int, volt_dec;
+	unsigned short maxR, minR;
+
 
 
 
@@ -123,6 +138,8 @@ int main(void)
 		}
 	}
 
+	//ADC Configuration.
+	AdcConfig();
 
 	//--- PRUEBA DISPLAY LCD ---
 	EXTIOff ();
@@ -143,18 +160,36 @@ int main(void)
 	while (FuncShowBlink ((const char *) "Kirno Technology", (const char *) "   -DC Meas-   ", 2, BLINK_NO) != LCD_RESP_FINISH);
 
 
+
 	//TIM Configuration.
 //	TIM_16_Init();
 
 	//--- COMIENZO PROGRAMA DE PRODUCCION
 
 	//--- Main loop ---//
+	i = 0;
+
 	while(1)
 	{
 		switch (main_state)
 		{
 			case SET_CURRENT_ZERO:
-				resp = FuncShowBlink ((const char *) "Wait for setting", (const char *) "Current to zero ", 5, BLINK_DIRECT);
+				resp = FuncShowBlink ((const char *) "Wait for setting", (const char *) "Current to zero ", 2, BLINK_DIRECT);
+
+				if (i < 31)
+				{
+					if (!tt_current)
+					{
+						current_samples [i] = ReadADC1_SameSampleTime(ADC_CH7);
+						tt_current = 8;
+						i++;
+					}
+				}
+				else if (i != 0xFF)
+				{
+					current_zero = MA32 (current_samples);
+					i = 0xFF;
+				}
 
 				//setear 0 en corriente!!
 				if (resp == LCD_RESP_FINISH)
@@ -162,8 +197,100 @@ int main(void)
 				break;
 
 			case WAIT_CURRENT_ZERO:
+			 	sprintf(str, "%4d            ", current_zero);
+				while (FuncShowBlink ((const char *) "Current zero in:", str, 2, BLINK_NO) != LCD_RESP_FINISH);
+
+				while (FuncShowBlink (s_blank_line, s_blank_line, 0, BLINK_NO) != LCD_RESP_FINISH);
+
+				LCD_1ER_RENGLON;
+				LCDTransmitStr("V:      V  R:");
+				LCD_2DO_RENGLON;
+				LCDTransmitStr("I:      A");
+
+				main_state++;
 				break;
 
+			case START_MEAS:
+				if (i < 31)
+				{
+					if (!tt_current)
+					{
+						current_samples [i] = ReadADC1_SameSampleTime(ADC_CH7);
+						voltage_samples [i] = ReadADC1_SameSampleTime(ADC_CH6);
+						tt_current = 8;
+						i++;
+					}
+				}
+				else
+				{
+					i = 0;
+					main_state++;
+				}
+				break;
+
+			case SHOW_V:
+				voltage = MA32 (voltage_samples);
+				//LCD_1ER_RENGLON;
+				Lcd_SetDDRAM(0x00 + 3);
+
+				fcalc = voltage;
+				fcalc = fcalc * KV;
+				volt_int = (short) fcalc;
+				fcalc = fcalc - volt_int;
+				fcalc = fcalc * 100;
+				volt_dec = (short) fcalc;
+
+				sprintf(str, "%2d.%02d", volt_int, volt_dec);
+
+				//sprintf(str, "%4d        ", voltage);
+				LCDTransmitStr(str);
+				main_state++;
+
+				break;
+
+			case SHOW_I:
+				current = MA32 (current_samples);
+				//LCD_1ER_RENGLON;
+				Lcd_SetDDRAM(0x40 + 3);
+
+				if (current < current_zero)
+					current = 0;
+				else
+					current = current - current_zero;
+
+				fcalc = current;
+				fcalc = fcalc * KI;
+				volt_int = (short) fcalc;
+				fcalc = fcalc - volt_int;
+				fcalc = fcalc * 100;
+				volt_dec = (short) fcalc;
+
+				sprintf(str, "%2d.%02d", volt_int, volt_dec);
+				LCDTransmitStr(str);
+				main_state++;
+				break;
+
+			case SHOW_R:
+				maxR = SeekMax32 (voltage_samples);
+				minR = SeekMin32 (voltage_samples);
+
+				Lcd_SetDDRAM(0x00 + 13);
+
+				fcalc = maxR - minR;
+				fcalc = fcalc * KV;
+				volt_int = (short) fcalc;
+				fcalc = fcalc - volt_int;
+				fcalc = fcalc * 10;
+				volt_dec = (short) fcalc;
+
+				if (volt_int > 9)
+					volt_int = 9;
+
+				//LCD_1ER_RENGLON;
+				sprintf(str, "%1d.%1d", volt_int, volt_dec);
+				LCDTransmitStr(str);
+				main_state = START_MEAS;
+				break;
 
 			default:
 				main_state = SET_CURRENT_ZERO;
@@ -190,6 +317,9 @@ void TimingDelay_Decrement(void)
 
 	if (timer_standby)
 		timer_standby--;
+
+	if (tt_current)
+		tt_current--;
 
 
 	//-------- Timers para funciones y sus menues ---------//
