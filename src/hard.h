@@ -9,8 +9,8 @@
 #define HARD_H_
 
 //-------- Board Configuration -----------------------//
-//#define VER_1_0
-#define VER_1_1
+#define VER_1_0
+
 
 //--- Pruebas de hardware, consumo sin int
 //#define WITHOUT_INT
@@ -23,18 +23,32 @@
 //#define BOOST_CONVENCIONAL	//placa anterior del tama�o de la F12V5A ultimo prog 13-07-16
 //#endif
 
-#if defined (VER_1_0) || defined (VER_1_1)
+#ifdef VER_1_0
 //GPIOA pin0
-#define S1 ((GPIOA->IDR & 0x0001) == 0)
-
 //GPIOA pin1
+//GPIOA pin2
+//GPIOA pin3		interface LCD
+
+//GPIOA pin4
+#define LCD_E ((GPIOA->ODR & 0x0010) != 0)
+#define LCD_E_ON	GPIOA->BSRR = 0x00000010
+#define LCD_E_OFF GPIOA->BSRR = 0x00100000
+
+//GPIOA pin5
+#define LCD_RS ((GPIOA->ODR & 0x0020) != 0)
+#define LCD_RS_ON	GPIOA->BSRR = 0x00000020
+#define LCD_RS_OFF GPIOA->BSRR = 0x00200000
+
+
+
+
+
+//lo viejo
+#define S1 ((GPIOA->IDR & 0x0001) == 0)
 #define LED ((GPIOA->ODR & 0x0002) != 0)
 #define LED_ON	GPIOA->BSRR = 0x00000002
 #define LED_OFF GPIOA->BSRR = 0x00020000
 
-//GPIOA pin2
-
-//GPIOA pin3
 #define TX_CODE ((GPIOA->ODR & 0x0008) != 0)
 #define TX_CODE_ON	GPIOA->BSRR = 0x00000008
 #define TX_CODE_OFF GPIOA->BSRR = 0x00080000

@@ -23,6 +23,9 @@
 #include "pwr.h"
 #include "codes.h"
 
+#include "lcd.h"
+#include "lcd_utils.h"
+
 #include "flash_program.h"
 
 //#include <stdio.h>
@@ -30,10 +33,27 @@
 
 
 /* Externals variables ---------------------------------------------------------*/
+parameters_typedef param_struct;
+
+
+// ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned short wait_ms_var = 0;
-parameters_typedef param_struct;
 volatile unsigned short timer_tick = 0;
+
+//----- para menues (main_menu.c) ----------
+volatile unsigned short function_timer;
+volatile unsigned short show_select_timer = 0;
+volatile unsigned short scroll1_timer;
+volatile unsigned short scroll2_timer;
+volatile unsigned short lcd_backlight_timer;
+
+// ------- del display LCD -------
+const char s_blank_line [] = {"                "};
+
+
+
+
 
 
 //--- VARIABLES GLOBALES ---//
@@ -96,8 +116,8 @@ int main(void)
 	EXTIOff();
 
 	//ACTIVAR SYSTICK TIMER
-	//if (SysTick_Config(48000))		//del core_cm0.h
-	if (SysTick_Config(8000))		//del core_cm0.h
+	if (SysTick_Config(48000))		//del core_cm0.h
+	//if (SysTick_Config(8000))		//del core_cm0.h
 	{
 		while (1)	/* Capture error */
 		{
@@ -115,6 +135,31 @@ int main(void)
 		}
 	}
 
+
+	//--- PRUEBA DISPLAY LCD ---
+	EXTIOff ();
+	LCDInit();
+	LED_ON;
+
+	//--- Welcome code ---//
+	Lcd_Command(CLEAR);
+	Wait_ms(100);
+	Lcd_Command(CURSOR_OFF);
+	Wait_ms(100);
+	Lcd_Command(BLINK_OFF);
+	Wait_ms(100);
+
+	// LCDTransmitStr("KIRNO");
+	// while (1);
+
+	while (FuncShowBlink ((const char *) "Kirno Technology", (const char *) "   -DC Meas-   ", 2, BLINK_NO) != LCD_RESP_FINISH);
+	LED_OFF;
+	//while (FuncShowBlink ((const char *) "Hardware: V1.2  ", (const char *) "Software: V2.3  ", 1, BLINK_CROSS) != RESP_FINISH);
+	while (FuncShowBlink ((const char *) "Hardware: V1.2  ", (const char *) "Software: V2.4  ", 1, BLINK_CROSS) != LCD_RESP_FINISH);
+
+	while (1);
+
+	//programa viejo de controles!!!!
 
 	//TIM Configuration.
 	TIM_16_Init();
@@ -496,5 +541,13 @@ void TimingDelay_Decrement(void)
 		timer_for_stop--;
 
 	timer_tick++;
+
+	//-------- Timers para funciones y sus menues ---------//
+	if (function_timer)
+		function_timer--;
+
+	if (show_select_timer)
+		show_select_timer--;
+
 
 }

@@ -66,17 +66,16 @@ void GPIO_Config (void)
 	//10: Pull-down
 	//11: Reserved
 
-#if defined (VER_1_0) || defined (VER_1_1)
-#ifdef GPIOA_ENABLE
+#ifdef VER_1_0
 
+#ifdef GPIOA_ENABLE
 	//--- GPIO A ---//
 	if (!GPIOA_CLK)
 		GPIOA_CLK_ON;
 
-#ifdef VER_1_0
 	temp = GPIOA->MODER;	//2 bits por pin
-	temp &= 0xFFFFC030;		//PA0 input; PA1 out; PA3 out; PA4 input; PA5 input; PA6 out
-	temp |= 0x00001044;
+	temp &= 0xFFFFC000;		///PA0 - PA5 out push_pull;; PA6 out
+	temp |= 0x00001555;
 	GPIOA->MODER = temp;
 
 	temp = GPIOA->OTYPER;	//1 bit por pin
@@ -90,100 +89,13 @@ void GPIO_Config (void)
 	GPIOA->OSPEEDR = temp;
 
 	temp = GPIOA->PUPDR;	//2 bits por pin
-	temp &= 0xFFFFFCFC;		//PA0 PA4 pull up
-	temp |= 0x00000101;
+	temp &= 0xFFFFFFFF;
+	temp |= 0x00000000;
 	GPIOA->PUPDR = temp;
-#endif
+#endif	//GPIOA
 
-#ifdef VER_1_1
-	//--- GPIO A ---//
-	temp = GPIOA->MODER;	//2 bits por pin
-	temp &= 0xFFC30000;		//PA0 input; PA1 out; PA2 out; PA4 input; PA5 input; PA6 out
-	temp |= 0x00145054;		//PA2 PA7 PA9 PA10 out para pruebas
-	GPIOA->MODER = temp;
-
-	temp = GPIOA->OTYPER;	//1 bit por pin
-	temp &= 0xFFFFFFFF;
-	temp |= 0x00000000;
-	GPIOA->OTYPER = temp;
-
-	temp = GPIOA->OSPEEDR;	//2 bits por pin
-	temp &= 0xFFFFFF33;
-	temp |= 0x00000000;		//PA1 PA3 low speed
-	GPIOA->OSPEEDR = temp;
-
-	temp = GPIOA->PUPDR;	//2 bits por pin
-	temp &= 0xFFFFFCFC;		//PA0 PA4 pull up
-	temp |= 0x00000101;
-	GPIOA->PUPDR = temp;
-
-	//mando los 1's de pruebas PA2 PA7 PA9 PA10
-	GPIOA->BSRR = 0x00000684;
-
-	//--- GPIO B ---//
-	GPIOB_CLK_ON;
-
-	temp = GPIOB->MODER;	//2 bits por pin
-	temp &= 0xFFFFFFF3;		//PB1 (output)
-	temp |= 0x00000004;
-	GPIOB->MODER = temp;
-
-	temp = GPIOB->OTYPER;	//1 bit por pin
-	temp &= 0xFFFFFFFF;
-	temp |= 0x00000000;
-	GPIOB->OTYPER = temp;
-
-	temp = GPIOB->OSPEEDR;	//2 bits por pin
-	temp &= 0xFFFFFFFF;
-	temp |= 0x00000000;
-	GPIOB->OSPEEDR = temp;
-
-	temp = GPIOB->PUPDR;	//2 bits por pin
-	temp &= 0xFFFFFFFF;
-	temp |= 0x00000000;
-	GPIOB->PUPDR = temp;
-
-	//mando los 1's de pruebas PB1
-	GPIOB->BSRR = 0x00000002;
-
-	GPIOB_CLK_OFF;
-
-	//--- GPIO F ---//
-	GPIOF_CLK_ON;
-
-	temp = GPIOF->MODER;
-	temp &= 0xFFFFFFF0;
-	temp |= 0x00000005;
-	GPIOF->MODER = temp;
-
-	temp = GPIOF->OTYPER;
-	temp &= 0xFFFFFFFF;
-	temp |= 0x00000000;
-	GPIOF->OTYPER = temp;
-
-	temp = GPIOF->OSPEEDR;
-	temp &= 0xFFFFFFFF;
-	temp |= 0x00000000;
-	GPIOF->OSPEEDR = temp;
-
-	temp = GPIOF->PUPDR;
-	temp &= 0xFFFFFFFF;
-	temp |= 0x00000000;
-	GPIOF->PUPDR = temp;
-
-	//mando los 1's de pruebas PF0 PF1
-	GPIOF->BSRR = 0x00000003;
-
-	GPIOF_CLK_OFF;
-
-
-#endif
-
-
-#endif
 
 #ifdef GPIOB_ENABLE
-
 	//--- GPIO B ---//
 	if (!GPIOB_CLK)
 		GPIOB_CLK_ON;
@@ -208,13 +120,9 @@ void GPIO_Config (void)
 	temp |= 0x00000000;
 	GPIOB->PUPDR = temp;
 
-
-#endif
-#endif
-
+#endif		//GPIOB
 
 #ifdef GPIOF_ENABLE
-
 	//--- GPIO F ---//
 	if (!GPIOF_CLK)
 		GPIOF_CLK_ON;
@@ -238,8 +146,8 @@ void GPIO_Config (void)
 	temp &= 0xFFFFFFFF;
 	temp |= 0x00000000;
 	GPIOF->PUPDR = temp;
+#endif	//GPIOF
 
-#endif
 
 #ifdef WITH_EXTI
 	//Interrupt en PB8
@@ -260,6 +168,7 @@ void GPIO_Config (void)
 	NVIC_SetPriority(EXTI4_15_IRQn, 6);
 
 #endif
+#endif 		//VER_1_0
 
 }
 
