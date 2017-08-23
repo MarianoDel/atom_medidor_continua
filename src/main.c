@@ -76,10 +76,13 @@ volatile unsigned short tt_current;
 #define SAVE_S2		2
 
 
-//Para las mediciones
-#define KV	0.0107
-#define KI	0.00473
+// //Para las mediciones	PLACA A
+// #define KV	0.01046
+// #define KI	0.00739
 
+//Para las mediciones	PLACA B
+#define KV	0.0103
+#define KI	0.00739
 
 
 //--- FUNCIONES DEL MODULO ---//
@@ -176,7 +179,7 @@ int main(void)
 			case SET_CURRENT_ZERO:
 				resp = FuncShowBlink ((const char *) "Wait for setting", (const char *) "Current to zero ", 2, BLINK_DIRECT);
 
-				if (i < 31)
+				if (i < 32)
 				{
 					if (!tt_current)
 					{
@@ -211,7 +214,7 @@ int main(void)
 				break;
 
 			case START_MEAS:
-				if (i < 31)
+				if (i < 32)
 				{
 					if (!tt_current)
 					{
@@ -253,6 +256,10 @@ int main(void)
 				//LCD_1ER_RENGLON;
 				Lcd_SetDDRAM(0x40 + 3);
 
+				// //tira el numero medido directamente y la resta
+				// sprintf(str, "%4d %4d", current, current - current_zero);
+				// LCDTransmitStr(str);
+
 				if (current < current_zero)
 					current = 0;
 				else
@@ -267,6 +274,7 @@ int main(void)
 
 				sprintf(str, "%2d.%02d", volt_int, volt_dec);
 				LCDTransmitStr(str);
+
 				main_state++;
 				break;
 

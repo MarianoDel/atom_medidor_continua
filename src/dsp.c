@@ -31,7 +31,7 @@ unsigned short RandomGen (unsigned int seed)
 }
 unsigned short MAFilterFast (unsigned short new_sample, unsigned short * vsample)
 {
-	unsigned short total_ma;
+	unsigned int total_ma;
 
 	//Kernel mejorado ver 2
 	//si el vector es de 0 a 7 (+1) sumo todas las posiciones entre 1 y 8, acomodo el nuevo vector entre 0 y 7
@@ -41,12 +41,14 @@ unsigned short MAFilterFast (unsigned short new_sample, unsigned short * vsample
 	*(vsample + 1) = *(vsample);
 	*(vsample) = new_sample;
 
-	return total_ma >> 2;
+	total_ma >>= 2;
+
+	return (unsigned short) total_ma;
 }
 
 unsigned short MAFilter8 (unsigned short new_sample, unsigned short * vsample)
 {
-	unsigned short total_ma;
+	unsigned int total_ma;
 
 	//Kernel mejorado ver 2
 	//si el vector es de 0 a 7 (+1) sumo todas las posiciones entre 1 y 8, acomodo el nuevo vector entre 0 y 7
@@ -61,12 +63,14 @@ unsigned short MAFilter8 (unsigned short new_sample, unsigned short * vsample)
 	*(vsample + 1) = *(vsample);
 	*(vsample) = new_sample;
 
-	return total_ma >> 3;
+	total_ma >>= 3;
+
+	return (unsigned short) total_ma;
 }
 
 unsigned short MAFilter32 (unsigned short new_sample, unsigned short * vsample)
 {
-	unsigned short total_ma;
+	unsigned int total_ma;
 
 	total_ma = new_sample + *(vsample) + *(vsample + 1) + *(vsample + 2) + *(vsample + 3) + *(vsample + 4) + *(vsample + 5) + *(vsample + 6);
 	total_ma += *(vsample + 7) + *(vsample + 8) + *(vsample + 9) + *(vsample + 10) + *(vsample + 11) + *(vsample + 12) + *(vsample + 13) + *(vsample + 14);
@@ -108,20 +112,24 @@ unsigned short MAFilter32 (unsigned short new_sample, unsigned short * vsample)
 	*(vsample + 1) = *(vsample);
 	*(vsample) = new_sample;
 
-	return total_ma >> 5;
+	total_ma >>= 5;
+
+	return (unsigned short) total_ma;
 }
 
 //recibe vector de 32 muestras y calcula Moving Average
 unsigned short MA32 (unsigned short * vsample)
 {
-	unsigned short total_ma;
+	unsigned int total_ma;
 
 	total_ma = *(vsample) + *(vsample + 1) + *(vsample + 2) + *(vsample + 3) + *(vsample + 4) + *(vsample + 5) + *(vsample + 6) + *(vsample + 7);
 	total_ma += *(vsample + 8) + *(vsample + 9) + *(vsample + 10) + *(vsample + 11) + *(vsample + 12) + *(vsample + 13) + *(vsample + 14) + *(vsample + 15);
 	total_ma += *(vsample + 16) + *(vsample + 17) + *(vsample + 18) + *(vsample + 19) + *(vsample + 20) + *(vsample + 21) + *(vsample + 22) + *(vsample + 23);
 	total_ma += *(vsample + 24) + *(vsample + 25) + *(vsample + 26) + *(vsample + 27) + *(vsample + 28) + *(vsample + 29) + *(vsample + 30) + *(vsample + 31);
 
-	return total_ma >> 5;
+	total_ma >>= 5;
+
+	return (unsigned short) total_ma;
 }
 
 unsigned short SeekMax32 (unsigned short * vsample)
